@@ -82,6 +82,7 @@
     <None Include="HomeEnvironment.ino">
       <FileType>CppCode</FileType>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logging.h" />
