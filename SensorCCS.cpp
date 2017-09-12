@@ -1,18 +1,49 @@
 #include "SensorCCS.h"
 #include "Logging.h"
-#include "Adafruit_CCS811.h"
 #include <Homie.h>
+#include "Adafruit_CCS811.h"
 
 extern HomieNode EnvironmentNode;
 Adafruit_CCS811 ccs;
 
 
 void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
-	this->reportFreq = reportFreq;
-	this->meassureFreq = meassureFreq;
+	isSetup = true;
 
+	reportTimer.setup( reportFreq * 1000 );
+	meassureTimer.setup( meassureFreq * 1000 );
+	calibrateTimer.setup( CCS_CALIB_FREQ * 1000 );
+	warmupTimer.setup( CCS_WARMUP_TIME * 1000 );
+
+	reconnect();
+}
+
+
+void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
+	if ( isSetup ) {
+		this->calibTemp = calibTemp;
+		this->calibHumidity = calibHumidity;
+
+		// Is the sensor warmed up?
+		if ( sensorWarmedUp == false && warmupTimer.triggered() ) {
+			// Sensor is warmed up, now we can do measurements and reporting
+			sensorWarmedUp = true;
+		}
+		if ( sensorWarmedUp ) {
+			if ( meassureTimer.triggered() ) readSensor();
+			if ( reportTimer.triggered() ) {
+				sendCo2();
+				sendTvoc();
+				sensorErrors = 0;
+			}
+			if ( calibrateTimer.triggered() ) doCalibrate();
+		} 
+	}
+}
+
+
+void SensorCCSClass::reconnect() {
 	sensorErrors = 0;
-	lastCalibrated = lastMeassured = lastReported = millis();
 	co2Acc = co2Measurements = tvocAcc = tvocMeasurements = 0;
 
 	if ( ccs.begin() ) {
@@ -23,36 +54,8 @@ void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
 	}
 }
 
-void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
-	this->calibTemp = calibTemp;
-	this->calibHumidity = calibHumidity;
-
-	// Is the sensor warmed up?
-	if ( millis() < CCS_WARMUP_TIME * 1000 ) {
-		sensorWarmedUp = false;
-	} else {
-		// Sensor is warmed up, now we can do measurements and reporting
-		sensorWarmedUp = true;
-		if ( millis() - lastMeassured >= meassureFreq * 1000 ) {
-			readSensor();
-			lastMeassured = millis();
-		}
-		if ( millis() - lastReported >= reportFreq * 1000 ) {
-			sendCo2();
-			sendTvoc();
-			sensorErrors = 0;
-			lastReported = millis();
-		}
-		if ( millis() - lastCalibrated >= CCS_CALIB_FREQ * 1000 ) {
-			calibrate();
-			lastCalibrated = millis();
-		}
-	}
-}
-
-
 void SensorCCSClass::readSensor() {
-	if ( sensorErrors > 0 ) connect( meassureFreq, reportFreq );
+	if ( sensorErrors > 0 ) reconnect();
 	if ( sensorErrors == 0 ) {
 		if ( ccs.available() ) {
 			if ( !ccs.readData() ) {
@@ -134,7 +137,7 @@ void SensorCCSClass::sendTvoc() {
 }
 
 
-void SensorCCSClass::calibrate() {
+void SensorCCSClass::doCalibrate() {
 	if ( calibTemp != 0 && calibHumidity != 0 ) {
 		LOG_NOTICE( "CCS", "Calibrating sensor with temp = " << calibTemp << " C and humidity = " << calibHumidity << " %" );
 		ccs.setEnvironmentalData( calibHumidity, calibTemp );
@@ -145,7 +148,7 @@ void SensorCCSClass::calibrate() {
 
 
 bool SensorCCSClass::isSensorAlive() {
-	bool alive = ( sensorErrors == 0 && sensorWarmedUp );
+	bool alive = ( isSetup && sensorWarmedUp && ( sensorErrors == 0 ) );
 	sensorErrors = 0;
 	return alive;
 }

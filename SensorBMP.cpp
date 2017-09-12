@@ -8,11 +8,16 @@ Adafruit_BMP085 bmp;
 
 
 void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
-	this->reportFreq = reportFreq;
-	this->meassureFreq = meassureFreq;
+	isSetup = true;
 
+	reportTimer.setup( reportFreq * 1000 );
+	meassureTimer.setup( meassureFreq * 1000 );
+	reconnect();
+}
+
+
+void SensorBMPClass::reconnect() {
 	sensorErrors = 0;
-	lastReported = lastMeassured = millis();
 	pressureAcc = pressureMeasurements = tempAcc = tempMeasurements = 0;
 
 	if ( bmp.begin() ) {
@@ -23,17 +28,16 @@ void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
 	}
 }
 
-
 void SensorBMPClass::handle() {
-	if ( millis() - lastMeassured >= meassureFreq * 1000 ) {
-		readTemp();
-		readPressure();
-		lastMeassured = millis();
-	}
-	if ( millis() - lastReported >= reportFreq * 1000 ) {
-		sendTemperature();
-		sendPressure();
-		lastReported = millis();
+	if ( isSetup ) {
+		if ( meassureTimer.triggered() ) {
+			readTemp();
+			readPressure();
+		}
+		if ( reportTimer.triggered() ) {
+			sendTemp();
+			sendPressure();
+		}
 	}
 }
 
@@ -47,7 +51,7 @@ void SensorBMPClass::readTemp() {
 	} else {
 		LOG_ERROR( "BMP", "Could not get sane temperature" );
 		sensorErrors++;
-		connect( reportFreq, meassureFreq );
+		reconnect();
 	}
 }
 
@@ -61,7 +65,7 @@ void SensorBMPClass::readPressure() {
 	} else {
 		LOG_ERROR( "BMP", "Could not get sane pressure" );
 		sensorErrors++;
-		connect( reportFreq, meassureFreq );
+		reconnect();
 	}
 }
 
@@ -86,8 +90,8 @@ float SensorBMPClass::getAvgPressure() {
 }
 
 
-void SensorBMPClass::sendTemperature() {
-	if ( sensorErrors == 0 ) {
+void SensorBMPClass::sendTemp() {
+	if ( tempMeasurements > 0 ) {
 		float temperature = getAvgTemp();
 		LOG_NOTICE( "MQTT", "Sending BMP average temperature of " << temperature << " C" );
 		EnvironmentNode.setProperty( "temperatureBMP" ).send( String( temperature ) );
@@ -99,7 +103,7 @@ void SensorBMPClass::sendTemperature() {
 
 
 void SensorBMPClass::sendPressure() {
-	if ( sensorErrors == 0 ) {
+	if ( pressureMeasurements > 0 ) {
 		float pressure = getAvgPressure();
 		LOG_NOTICE( "MQTT", "Sending BMP average pressure of " << pressure << " mbar" );
 		EnvironmentNode.setProperty( "pressure" ).send( String( pressure ) );
@@ -111,7 +115,7 @@ void SensorBMPClass::sendPressure() {
 
 
 bool SensorBMPClass::isSensorAlive() {
-	bool alive = ( sensorErrors == 0);
+	bool alive = ( isSetup && sensorErrors == 0 );
 	sensorErrors = 0;
 	return alive;
 }

@@ -2,10 +2,17 @@
 #define _SENSORBMP_h
 
 #include <Arduino.h>
+#include "Timing.h"
+
 
 class SensorBMPClass
 {
  protected:
+	 bool isSetup = false;
+
+	 Timing reportTimer; 
+	 Timing meassureTimer;
+
 	 float tempAcc = 0;
 	 uint16_t tempMeasurements = 0;
 
@@ -14,15 +21,12 @@ class SensorBMPClass
 
 	 uint16_t sensorErrors = 0;
 
-	 uint16_t meassureFreq; // How often the sensor should be read from device. In seconds
-	 uint16_t reportFreq; // How often readings should be reported via mqtt. In seconds
-	 long lastReported;
-	 long lastMeassured;
-
+	 void reconnect();
 	 void readTemp();
 	 void readPressure();
-	 void sendTemperature();
+	 void sendTemp();
 	 void sendPressure();
+
  public:
 	void connect( uint16_t meassureFreq, uint16_t reportFreq );
 	void handle();

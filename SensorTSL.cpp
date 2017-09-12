@@ -8,32 +8,34 @@ SFE_TSL2561 light;
 
 
 void SensorTSLClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
-	this->reportFreq = reportFreq;
-	this->meassureFreq = meassureFreq;
+	isSetup = true;
 
+	reportTimer.setup( reportFreq * 1000 );
+	meassureTimer.setup( meassureFreq * 1000 );
+	reconnect();
+}
+
+
+void SensorTSLClass::handle() {
+	if ( isSetup ) {
+		if ( meassureTimer.triggered() ) readSensor();
+		if ( reportTimer.triggered() ) {
+			sendLight();
+			sendIrPercentage();
+		}
+	}
+}
+
+
+void SensorTSLClass::reconnect() {
 	sensorErrors = 0;
 	lightAcc = lightMeasurements = rawLightBroadbandAcc = rawLightInfraredAcc = rawLightMeasurements = 0;
-	lastReported = lastMeassured = millis();
 
 	light.begin();
 	light.setTiming( gain, SAMPLE_TIME, sampledTime );
 	light.setPowerUp();
 	LOG_NOTICE( "TSL", "Sensor Connected" );
 }
-
-
-void SensorTSLClass::handle() {
-	if ( millis() - lastMeassured >= meassureFreq * 1000 ) {
-		readSensor();
-		lastMeassured = millis();
-	}
-	if ( millis() - lastReported >= reportFreq * 1000 ) {
-		sendLight();
-		sendIrPercentage();
-		lastReported = millis();
-	}
-}
-
 
 void SensorTSLClass::readSensor() {
 	unsigned int broadbandRaw, irRaw;
@@ -43,11 +45,11 @@ void SensorTSLClass::readSensor() {
 		if ( light.getLux( gain, sampledTime, broadbandRaw, irRaw, lux ) ) {
 			LOG_INFO( "TSL", "Light = " << lux << " lux. Gain = " << ( gain == 0 ? "1X." : "16X" ) );
 			lightAcc += lux;
+			lightMeasurements++;
 			LOG_INFO( "TSL", "Raw Broadband Light = " << broadbandRaw );
 			rawLightBroadbandAcc += broadbandRaw;
 			LOG_INFO( "TSL", "Raw Infrared Light = " << irRaw );
 			rawLightInfraredAcc += irRaw;
-			lightMeasurements++;
 			rawLightMeasurements++;
 			if ( lux < HIGH_GAIN_LIMIT && gain == 0 ) {
 				LOG_WARNING( "TSL", "Light is less than " << HIGH_GAIN_LIMIT << ". Raising gain to 16X" );
@@ -62,9 +64,8 @@ void SensorTSLClass::readSensor() {
 	} else {
 		byte error = light.getError();
 		LOG_ERROR( "TSL", "Error code = " << error );
-		connect( meassureFreq, reportFreq );
+		reconnect();
 		sensorErrors++;
-
 	}
 }
 
@@ -91,7 +92,7 @@ float SensorTSLClass::getAvgIrPercentage() {
 
 
 void SensorTSLClass::sendLight() {
-	if ( lightMeasurements > 0 && sensorErrors == 0 ) {
+	if ( lightMeasurements > 0 ) {
 		double light = getAvgLight();
 		LOG_NOTICE( "MQTT", "Sending TSL average light of " << light << " lux" );
 		EnvironmentNode.setProperty( "light" ).send( String( light ) );
@@ -103,7 +104,7 @@ void SensorTSLClass::sendLight() {
 
 
 void SensorTSLClass::sendIrPercentage() {
-	if ( rawLightMeasurements > 0  && sensorErrors == 0) {
+	if ( rawLightMeasurements > 0 ) {
 		float IRPercentage = getAvgIrPercentage();
 		LOG_NOTICE( "MQTT", "Sending TSL average IR Percentage of " << IRPercentage << " %" );
 		EnvironmentNode.setProperty( "IRpercentage" ).send( String( IRPercentage ) );
@@ -115,7 +116,7 @@ void SensorTSLClass::sendIrPercentage() {
 
 
 bool SensorTSLClass::isSensorAlive() {
-	bool alive = ( sensorErrors == 0);
+	bool alive = isSetup && ( sensorErrors == 0 );
 	sensorErrors = 0;
 	return alive;
 }

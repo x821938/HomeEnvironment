@@ -2,17 +2,21 @@
 #define _SENSORPIR_h
 
 #include <Arduino.h>
-#define PIR_PIN	D5
+#include "Timing.h"
+
+#define PIR_PIN	D0
+
 
 class SensorPIRClass
 {
  protected:
+	 bool isSetup = false;
+
+	 Timing reportTimer;
+
 	 bool lastPirValue = 0;
 	 long motionTime = 0;
-	 long motionStarted = 0;
-
-	 uint16_t reportFreq; // How often readings should be reported via mqtt. In seconds
-	 long lastReported;
+	 long motionStartedAt = 0;
 
 	 void sendPIR();
 	 void sendPIRMotionTime();
@@ -21,7 +25,6 @@ class SensorPIRClass
 	 void handle();
 	 
 };
-
 
 #endif
 
