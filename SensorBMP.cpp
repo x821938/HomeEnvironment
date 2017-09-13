@@ -7,26 +7,25 @@ extern HomieNode EnvironmentNode;
 Adafruit_BMP085 bmp;
 
 
-void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq ) {
+void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
 	isSetup = true;
 
-	reportTimer.setup( reportFreq * 1000 );
+	sensorBMPpressure.connect( "BMP", "pressure", "pressure", "mbar", AVERAGE, reportFreq, deviceLostAfter );
+	sensorBMPtemp.connect( "BMP", "temperatureBMP", "temperature", "C", AVERAGE, reportFreq, deviceLostAfter );
+
 	meassureTimer.setup( meassureFreq * 1000 );
 	reconnect();
 }
 
 
 void SensorBMPClass::reconnect() {
-	sensorErrors = 0;
-	pressureAcc = pressureMeasurements = tempAcc = tempMeasurements = 0;
-
 	if ( bmp.begin() ) {
-		LOG_NOTICE( "BMP", "Sensor connected" );
+		LOG_NOTICE( "BMP", "Sensor setup completed" );
 	} else {
-		LOG_ERROR( "BMP", "Could not connect to sensor" );
-		sensorErrors++;
+		LOG_ERROR( "BMP", "Sensor setup failed" );
 	}
 }
+
 
 void SensorBMPClass::handle() {
 	if ( isSetup ) {
@@ -34,10 +33,8 @@ void SensorBMPClass::handle() {
 			readTemp();
 			readPressure();
 		}
-		if ( reportTimer.triggered() ) {
-			sendTemp();
-			sendPressure();
-		}
+		sensorBMPpressure.handle();
+		sensorBMPtemp.handle();
 	}
 }
 
@@ -45,12 +42,9 @@ void SensorBMPClass::handle() {
 void SensorBMPClass::readTemp() {
 	float temperature = bmp.readTemperature();
 	if ( temperature < 60 && temperature > -30 ) {
-		LOG_INFO( "BMP", "Temperature = " << temperature << " C" );
-		tempAcc += temperature;
-		tempMeasurements++;
+		sensorBMPtemp.addIncomingData( temperature );
 	} else {
 		LOG_ERROR( "BMP", "Could not get sane temperature" );
-		sensorErrors++;
 		reconnect();
 	}
 }
@@ -59,63 +53,16 @@ void SensorBMPClass::readTemp() {
 void SensorBMPClass::readPressure() {
 	float pressure = bmp.readPressure() / 100.0;
 	if ( pressure > 800 && pressure < 1100 ) {
-		LOG_INFO( "BMP", "Pressure = " << pressure << " mbar" );
-		pressureAcc += pressure;
-		pressureMeasurements++;
+		sensorBMPpressure.addIncomingData( pressure );
 	} else {
 		LOG_ERROR( "BMP", "Could not get sane pressure" );
-		sensorErrors++;
 		reconnect();
 	}
 }
 
 
-float SensorBMPClass::getAvgTemp() {
-	if ( tempMeasurements > 0 ) {
-		float temperatureAverage = tempAcc / tempMeasurements;
-		return temperatureAverage;
-	} else {
-		return 0;
-	}
-}
-
-
-float SensorBMPClass::getAvgPressure() {
-	if ( pressureMeasurements > 0 ) {
-		float pressureAverage = pressureAcc / pressureMeasurements;
-		return pressureAverage;
-	} else {
-		return 0;
-	}
-}
-
-
-void SensorBMPClass::sendTemp() {
-	if ( tempMeasurements > 0 ) {
-		float temperature = getAvgTemp();
-		LOG_NOTICE( "MQTT", "Sending BMP average temperature of " << temperature << " C" );
-		EnvironmentNode.setProperty( "temperatureBMP" ).send( String( temperature ) );
-	} else {
-		LOG_WARNING( "MQTT", "No BMP temperature data to send" );
-	}
-	tempAcc = tempMeasurements = 0;
-}
-
-
-void SensorBMPClass::sendPressure() {
-	if ( pressureMeasurements > 0 ) {
-		float pressure = getAvgPressure();
-		LOG_NOTICE( "MQTT", "Sending BMP average pressure of " << pressure << " mbar" );
-		EnvironmentNode.setProperty( "pressure" ).send( String( pressure ) );
-	} else {
-		LOG_WARNING( "MQTT", "No BMP pressure data to send" );
-	}
-	pressureAcc = pressureMeasurements = 0;
-}
-
 
 bool SensorBMPClass::isSensorAlive() {
-	bool alive = ( isSetup && sensorErrors == 0 );
-	sensorErrors = 0;
+	bool alive = ( isSetup && sensorBMPpressure.isSensorAlive() && sensorBMPtemp.isSensorAlive() );
 	return alive;
 }

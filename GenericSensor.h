@@ -1,5 +1,5 @@
-#ifndef _SENSORSPI_h
-#define _SENSORSPI_h
+#ifndef _GENERICSENSOR_h
+#define _GENERICSENSOR_h
 
 #include <Arduino.h>
 #include "Timing.h"
@@ -11,7 +11,7 @@ enum SensorType {
 };
 
 
-class SensorSPIClass
+class GenericSensorClass
 {
  protected:
 	 bool isSetup = false;

@@ -2,16 +2,16 @@
 #include "External\SPISlave.h"
 #include "Logging.h"
 #include "Homie.h"
-#include "SensorSPI.h"
+#include "GenericSensor.h"
 
 
-extern SensorSPIClass sensorDHTtemp;
-extern SensorSPIClass sensorDHThumidity;
-extern SensorSPIClass sensorPPDdust;
-extern SensorSPIClass sensorMHZco2;
-extern SensorSPIClass sensorMICvol;
-extern SensorSPIClass sensorMICrms;
-extern SensorSPIClass sensorMICmax;
+extern GenericSensorClass sensorDHTtemp;
+extern GenericSensorClass sensorDHThumidity;
+extern GenericSensorClass sensorPPDdust;
+extern GenericSensorClass sensorMHZco2;
+extern GenericSensorClass sensorMICvol;
+extern GenericSensorClass sensorMICrms;
+extern GenericSensorClass sensorMICmax;
 
 
 SPI::SPI() {

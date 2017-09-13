@@ -88,7 +88,7 @@
     <ClInclude Include="External\hspi_slave.h" />
     <ClInclude Include="External\SPISlave.h" />
     <ClInclude Include="Logging.h" />
-    <ClInclude Include="SensorSPI.h" />
+    <ClInclude Include="GenericSensor.h" />
     <ClInclude Include="SPI.h" />
     <ClInclude Include="SensorBMP.h" />
     <ClInclude Include="SensorCCS.h" />
@@ -100,7 +100,7 @@
   <ItemGroup>
     <ClCompile Include="External\hspi_slave.c" />
     <ClCompile Include="External\SPISlave.cpp" />
-    <ClCompile Include="SensorSPI.cpp" />
+    <ClCompile Include="GenericSensor.cpp" />
     <ClCompile Include="SPI.cpp" />
     <ClCompile Include="SensorBMP.cpp" />
     <ClCompile Include="SensorCCS.cpp" />

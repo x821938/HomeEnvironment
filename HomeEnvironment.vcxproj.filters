@@ -55,7 +55,7 @@
     <ClInclude Include="Timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SensorSPI.h">
+    <ClInclude Include="GenericSensor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -84,7 +84,7 @@
     <ClCompile Include="Timing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SensorSPI.cpp">
+    <ClCompile Include="GenericSensor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,11 +1,11 @@
-#include "SensorSPI.h"
+#include "GenericSensor.h"
 #include "Logging.h"
 #include "Homie.h"
 
 extern HomieNode EnvironmentNode;
 
 
-void SensorSPIClass::connect(const char *sensorName, const char *mqttName, const char *dataDesc, const char *dataUnit, SensorType sensorType, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+void GenericSensorClass::connect(const char *sensorName, const char *mqttName, const char *dataDesc, const char *dataUnit, SensorType sensorType, uint16_t reportFreq, uint16_t deviceLostAfter ) {
 	isSetup = true;
 
 	_sensorName = new char[strlen( sensorName ) + 1];
@@ -22,16 +22,16 @@ void SensorSPIClass::connect(const char *sensorName, const char *mqttName, const
 	lastDataReceivedAt = millis();
 	dataAcc = dataMeasurements = dataMax = 0;
 
-	LOG_NOTICE( _sensorName, "Sensor for meassuring " << _dataDesc << " is connected" );
+	LOG_NOTICE( _sensorName, "Sensor for meassuring " << _dataDesc << " is setup" );
 }
 
 
-void SensorSPIClass::handle() {
+void GenericSensorClass::handle() {
 	if ( isSetup && reportTimer.triggered() ) sendData();
 }
 
 
-void SensorSPIClass::addIncomingData( float value ) {
+void GenericSensorClass::addIncomingData( float value ) {
 	if ( isSetup ) {
 		lastDataReceivedAt = millis();
 		LOG_INFO( _sensorName, _dataDesc << " = " << value << " " << _dataUnit );
@@ -42,7 +42,7 @@ void SensorSPIClass::addIncomingData( float value ) {
 }
 
 
-float SensorSPIClass::getAvgValue() {
+float GenericSensorClass::getAvgValue() {
 	if ( dataMeasurements > 0 ) {
 		float dataAverage = dataAcc / dataMeasurements;
 		return dataAverage;
@@ -52,7 +52,7 @@ float SensorSPIClass::getAvgValue() {
 }
 
 
-void SensorSPIClass::sendData() {
+void GenericSensorClass::sendData() {
 	if ( dataMeasurements > 0 ) {
 		if ( _sensorType == AVERAGE ) {
 			float avgValue = getAvgValue();
@@ -69,7 +69,7 @@ void SensorSPIClass::sendData() {
 }
 
 
-bool SensorSPIClass::isSensorAlive() {
+bool GenericSensorClass::isSensorAlive() {
 	bool alive = isSetup && ( millis() - lastDataReceivedAt < _deviceLostAfter );
 	return alive;
 }

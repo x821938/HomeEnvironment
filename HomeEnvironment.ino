@@ -6,11 +6,11 @@
 #include <Homie.h>
 #include <Wire.h>
 
+#include "GenericSensor.h"
 #include "SensorPIR.h"
 #include "SensorTSL.h"
 #include "SensorCCS.h"
 #include "SensorBMP.h"
-#include "SensorSPI.h"
 
 
 SPI spi;
@@ -21,13 +21,13 @@ SensorPIRClass sensorPIR; // Motion
 SensorTSLClass sensorTSL; // Light
 SensorCCSClass sensorCCS; // Co2 and TVOC
 SensorBMPClass sensorBMP; // Pressure and temperature
-SensorSPIClass sensorDHTtemp;
-SensorSPIClass sensorDHThumidity;
-SensorSPIClass sensorPPDdust;
-SensorSPIClass sensorMHZco2;
-SensorSPIClass sensorMICvol;
-SensorSPIClass sensorMICrms;
-SensorSPIClass sensorMICmax;
+GenericSensorClass sensorDHTtemp;
+GenericSensorClass sensorDHThumidity;
+GenericSensorClass sensorPPDdust;
+GenericSensorClass sensorMHZco2;
+GenericSensorClass sensorMICvol;
+GenericSensorClass sensorMICrms;
+GenericSensorClass sensorMICmax;
 
 
 
@@ -46,7 +46,7 @@ void setup() {
 	Homie.setup();
 	
 	// Remote SPI sensors connected to "Arduino Pro Mini"
-	sensorDHTtemp.connect ( "DHT", "temperature", "temperature", "C", AVERAGE, 30, 10 );
+	sensorDHTtemp.connect ( "DHT", "temperatureDHT", "temperature", "C", AVERAGE, 30, 10 );
 	sensorDHThumidity.connect ( "DHT", "humidity", "humidity", "%", AVERAGE, 30, 10 );
 	sensorPPDdust.connect( "PPD", "dust", "dust level", "pcs/l", AVERAGE, 300, 600 );
 	sensorMHZco2.connect( "MHZ", "mhzco2", "Co2 concentration", "ppm", AVERAGE, 30, 20 );
@@ -55,9 +55,9 @@ void setup() {
 	sensorMICmax.connect( "MIC", "maxvolume", "Max volume", "%", MAX, 30, 60 );
 
 	// Local Sensors connected to ESP
-	sensorCCS.connect( 5, 30 );	
-	sensorTSL.connect( 5, 30 );
-	sensorBMP.connect( 5, 30 );	
+	sensorCCS.connect( 5, 30, 15 );	
+	sensorTSL.connect( 5, 30, 15 );
+	sensorBMP.connect( 5, 30, 15 );	
 	sensorPIR.connect( 30 );
 
 	// Reporting of sensor availability
@@ -84,7 +84,7 @@ void homieHandlerLoop() {
 		sensorMICrms.handle();
 		sensorMICmax.handle();
 		sensorBMP.handle();
-		sensorCCS.handle( sensorBMP.getAvgTemp(), sensorDHThumidity.getAvgValue() );
+		sensorCCS.handle( sensorDHTtemp.getAvgValue(), sensorDHThumidity.getAvgValue() );
 		sensorTSL.handle();
 		sensorPIR.handle();
 
