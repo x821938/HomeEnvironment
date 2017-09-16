@@ -6,18 +6,18 @@
 #include "GenericSensor.h"
 
 #define CCS_ADDR		0x5A
-#define CCS_WARMUP_TIME	1200 // 20 min according to datasheet
 #define CCS_CALIB_FREQ  1000 
-#define CCS_DEVICE_LOST_AFTER 20
-
+#define CCS_RECONNECTION_TIME 5
 
 class SensorCCSClass
 {
  protected:
 	 bool isSetup = false;
+	 bool isConnected = false;
 	 GenericSensorClass sensorCCSco2;
 	 GenericSensorClass sensorCCStvoc;
 
+	 Timing connectionTimer;
 	 Timing reportTimer;
 	 Timing meassureTimer;
 	 Timing warmupTimer;
@@ -33,7 +33,7 @@ class SensorCCSClass
 	 void doCalibrate();
 
  public:
-	void connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter );
+	void connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter, uint16_t warmedUpAfter );
 	void handle( float calibTemp, float calibHumidity );
 	bool isSensorAlive();
 };

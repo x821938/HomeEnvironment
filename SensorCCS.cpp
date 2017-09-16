@@ -7,17 +7,20 @@ extern HomieNode EnvironmentNode;
 Adafruit_CCS811 ccs;
 
 
-void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter, uint16_t warmedUpAfter ) {
 	isSetup = true;
+	isConnected = false;
+	sensorWarmedUp = false;
 
 	sensorCCSco2.connect( "CCS", "co2", "CO2 concentration", "ppm", AVERAGE, reportFreq, deviceLostAfter );
 	sensorCCStvoc.connect( "CCS", "tvoc", "TVOC concentration", "ppb", AVERAGE, reportFreq, deviceLostAfter );
 
+	connectionTimer.setup( CCS_RECONNECTION_TIME * 1000 );
 	meassureTimer.setup( meassureFreq * 1000 );
 	calibrateTimer.setup( CCS_CALIB_FREQ * 1000 );
-	warmupTimer.setup( CCS_WARMUP_TIME * 1000 );
+	warmupTimer.setup( warmedUpAfter * 1000 );
 
-	reconnect();
+	LOG_NOTICE( "CCS", "Sensor setup completed" );
 }
 
 
@@ -26,9 +29,10 @@ void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
 		this->calibTemp = calibTemp;
 		this->calibHumidity = calibHumidity;
 
-		// Is the sensor warmed up?
+		if ( isConnected == false && connectionTimer.triggered() ) reconnect();
+
 		if ( sensorWarmedUp == false && warmupTimer.triggered() ) {
-			LOG_NOTICE( "CCS", "Sensor now warmed up for " << CCS_WARMUP_TIME << "minutes" );
+			LOG_NOTICE( "CCS", "Sensor now warmed up" );
 			sensorWarmedUp = true;
 		}
 		if ( sensorWarmedUp ) {
@@ -43,35 +47,37 @@ void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
 
 void SensorCCSClass::reconnect() {
 	if ( ccs.begin() ) {
-		LOG_NOTICE( "CSS", "Sensor setup completed" );
+		LOG_NOTICE( "CSS", "Sensor is connected" );
+		isConnected = true;
 	} else {
-		LOG_ERROR( "CCS", "Sensor setup failed" );
+		LOG_ERROR( "CCS", "Sensor connection failed" );
 	}
 }
 
 
 void SensorCCSClass::readSensor() {
-	if ( ccs.available() ) {
+	if ( isConnected ) {
 		if ( !ccs.readData() ) {
 			if ( ccs.geteCO2() >= 400 && ccs.geteCO2() <= 8192 ) {
 				float co2 = ccs.geteCO2();
 				sensorCCSco2.addIncomingData( co2 );
 			} else {
 				LOG_ERROR( "CCS", "Could not get sane CO2 data" );
-				sensorWarmedUp = false;
+				isConnected = false;
 			}
 			if ( ccs.getTVOC() >= 0 && ccs.getTVOC() <= 1187 ) {
 				float tvoc = ccs.getTVOC();
 				sensorCCStvoc.addIncomingData( tvoc );
 			} else {
 				LOG_ERROR( "CCS", "Could not get sane TVOC data" );
-				sensorWarmedUp = false;
+				isConnected = false;
 			}
 		} else {
 			LOG_ERROR( "CCS", "Sensor could not read data" );
+			isConnected = false;
 		}
 	} else {
-		LOG_ERROR( "CCS","Sensor not available" );
+		isConnected = false;
 	}
 }
 

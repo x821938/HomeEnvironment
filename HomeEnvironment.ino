@@ -1,5 +1,6 @@
 #define AVAIL_REPORT_FREQ 30
 
+#include <user_interface.h>
 #include "Logging.h"
 #include "SPI.h"
 #include "Timing.h"
@@ -33,21 +34,30 @@ GenericSensorClass sensorMICmax;
 
 void setup() {
 	Serial.begin( 115200 );
+	bootReason();
 
 	// I2C settings ( remember to change twi_setClockStretchLimit from 230 to 460 in core_esp8266_si2c.c... Workaround for CCS881 Sensor )
 	Wire.begin( SDA, SCL );
-	Wire.setClock( 100000L ); 
+	Wire.setClock( 15000L ); 
+	Wire.setClockStretchLimit( 40000 );
 
 	// Homie setup
 	Homie_setFirmware( "homeenvironment", "1.0.0" );
-	Homie.setLoopFunction( homieHandlerLoop );
+	Homie.setSetupFunction( homieHandlerSetup ).setLoopFunction( homieHandlerLoop );
 	Homie.disableResetTrigger();
 	Homie.disableLedFeedback();
 	Homie.setup();
-	
+}
+
+
+void loop() {
+	Homie.loop();
+}
+
+void homieHandlerSetup() {
 	// Remote SPI sensors connected to "Arduino Pro Mini"
-	sensorDHTtemp.connect ( "DHT", "temperatureDHT", "temperature", "C", AVERAGE, 30, 10 );
-	sensorDHThumidity.connect ( "DHT", "humidity", "humidity", "%", AVERAGE, 30, 10 );
+	sensorDHTtemp.connect( "DHT", "temperatureDHT", "temperature", "C", AVERAGE, 30, 10 );
+	sensorDHThumidity.connect( "DHT", "humidity", "humidity", "%", AVERAGE, 30, 10 );
 	sensorPPDdust.connect( "PPD", "dust", "dust level", "pcs/l", AVERAGE, 300, 600 );
 	sensorMHZco2.connect( "MHZ", "mhzco2", "Co2 concentration", "ppm", AVERAGE, 30, 20 );
 	sensorMICvol.connect( "MIC", "avgvolume", "Avg volume", "%", AVERAGE, 30, 60 );
@@ -55,22 +65,13 @@ void setup() {
 	sensorMICmax.connect( "MIC", "maxvolume", "Max volume", "%", MAX, 30, 60 );
 
 	// Local Sensors connected to ESP
-	sensorCCS.connect( 5, 30, 15 );	
-	sensorTSL.connect( 5, 30, 15 );
-	sensorBMP.connect( 5, 30, 15 );	
+	sensorCCS.connect( 5, 30, 15, 1200 );
+	sensorTSL.connect( 5, 30, 15 ); 
+	sensorBMP.connect( 5, 30, 15 ); 
 	sensorPIR.connect( 30 );
 
 	// Reporting of sensor availability
 	availReportTimer.setup( (long) AVAIL_REPORT_FREQ * 1000 );
-
-	// Disable software watchdog. Now Relying on the hardware watchdog to reset if things goes wrong.
-	ESP.wdtDisable(); 
-}
-
-
-void loop() {
-	Homie.loop();
-	ESP.wdtFeed(); // Feed the watchdog.
 }
 
 
@@ -107,4 +108,19 @@ void reportSensorAvailability() {
 	status += sensorMHZco2.isSensorAlive() ?		0b10000000 : 0;
 	LOG_NOTICE( "MQTT", "Sending status of all sensors: " << status );
 	EnvironmentNode.setProperty( "sensorstatus" ).send( String( status ) );
+}
+
+// Checks how device is booted. No need for waiting for sensor warm up if we are booted by watchdog.
+uint8_t bootReason() {
+	rst_info *resetInfo;
+	resetInfo = ESP.getResetInfoPtr();
+	uint8_t reason = ( *resetInfo ).reason;
+	if ( reason == 1 || reason == 3) {
+		LOG_CRITICAL( "BOOT", "Booted because of watchdog" );
+	} else if ( reason == 6 ) {
+		LOG_NOTICE( "BOOT", "Booted with normal power on" );
+	} else {
+		LOG_CRITICAL( "BOOT", "Booted with unknown reason code: " << reason );
+	}
+	return ( reason );
 }

@@ -22,43 +22,45 @@ SPI::SPI() {
 
 
 void SPI::spiReceivedHandler( uint8_t * data, size_t len ) {
-	char msgType = *( (char*) data );			// First byte of SPI telegram is the type of data
-	uint8_t msgLen = *( (uint8_t*) data + 1 );	// Second byte is the length of data
+	if ( len > 2 ) {
+		char msgType = *( (char*) data );			// First byte of SPI telegram is the type of data
+		uint8_t msgLen = *( (uint8_t*) data + 1 );	// Second byte is the length of data
 
-	float dataValue;
-	memcpy( &dataValue, data + 2, sizeof( dataValue ) ); // At byte number two comes the date/struct
+		float dataValue;
+		memcpy( &dataValue, data + 2, sizeof( dataValue ) ); // At byte number two comes the date/struct
 
-	switch ( msgType ) {
-		case 'V':
-			debug( &dataValue, msgLen, "mic volume" );
-			sensorMICvol.addIncomingData( dataValue );
-			break;
-		case 'M':
-			debug( &dataValue, msgLen, "mic max volume" );
-			sensorMICmax.addIncomingData( dataValue );
-			break;
-		case 'R':
-			debug( &dataValue, msgLen, "mic RMS" );
-			sensorMICrms.addIncomingData( dataValue );
-			break;
-		case 'D':
-			debug( &dataValue, msgLen, "dust" );
-			sensorPPDdust.addIncomingData( dataValue );
-			break;
-		case 'H':
-			debug( &dataValue, msgLen, "humidity" );
-			sensorDHThumidity.addIncomingData( dataValue );
-			break;
-		case 'T':
-			debug( &dataValue, msgLen, "temperature" );
-			sensorDHTtemp.addIncomingData( dataValue );
-			break;
-		case 'Q':
-			debug( &dataValue, msgLen, "CO2" );
-			sensorMHZco2.addIncomingData( dataValue );
-			break;
-		default:
-			LOG_ERROR( "SPI", "Got unknown data" );
+		switch ( msgType ) {
+			case 'V':
+				debug( &dataValue, msgLen, "mic volume" );
+				sensorMICvol.addIncomingData( dataValue );
+				break;
+			case 'M':
+				debug( &dataValue, msgLen, "mic max volume" );
+				sensorMICmax.addIncomingData( dataValue );
+				break;
+			case 'R':
+				debug( &dataValue, msgLen, "mic RMS" );
+				sensorMICrms.addIncomingData( dataValue );
+				break;
+			case 'D':
+				debug( &dataValue, msgLen, "dust" );
+				sensorPPDdust.addIncomingData( dataValue );
+				break;
+			case 'H':
+				debug( &dataValue, msgLen, "humidity" );
+				sensorDHThumidity.addIncomingData( dataValue );
+				break;
+			case 'T':
+				debug( &dataValue, msgLen, "temperature" );
+				sensorDHTtemp.addIncomingData( dataValue );
+				break;
+			case 'Q':
+				debug( &dataValue, msgLen, "CO2" );
+				sensorMHZco2.addIncomingData( dataValue );
+				break;
+			default:
+				LOG_ERROR( "SPI", "Got unknown data" );
+		}
 	}
 }
 

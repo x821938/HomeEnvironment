@@ -16,7 +16,7 @@ void GenericSensorClass::connect(const char *sensorName, const char *mqttName, c
 	strcpy( _dataDesc, dataDesc );
 	_dataUnit = new char[strlen( dataUnit ) + 1];
 	strcpy( _dataUnit, dataUnit );
-	_deviceLostAfter = deviceLostAfter * 1000;
+	_deviceLostAfter = (long) deviceLostAfter * 1000;
 
 	reportTimer.setup( reportFreq * 1000 );
 	lastDataReceivedAt = millis();
