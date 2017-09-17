@@ -7,7 +7,7 @@ extern HomieNode EnvironmentNode;
 SFE_TSL2561 light;
 
 
-void SensorTSLClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+void SensorTSL::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
 	isSetup = true;
 
 	sensorTSLlight.connect( "TSL", "light", "light", "lux", AVERAGE, reportFreq, deviceLostAfter );
@@ -18,7 +18,7 @@ void SensorTSLClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16
 }
 
 
-void SensorTSLClass::handle() {
+void SensorTSL::handle() {
 	if ( isSetup ) {
 		if ( meassureTimer.triggered() ) readSensor();
 		sensorTSLlight.handle();
@@ -27,14 +27,14 @@ void SensorTSLClass::handle() {
 }
 
 
-void SensorTSLClass::reconnect() {
+void SensorTSL::reconnect() {
 	light.begin();
 	light.setTiming( gain, SAMPLE_TIME, sampledTime );
 	light.setPowerUp();
 	LOG_NOTICE( "TSL", "Sensor setup completed" );
 }
 
-void SensorTSLClass::readSensor() {
+void SensorTSL::readSensor() {
 	unsigned int broadbandRaw, irRaw;
 	double lux;
 
@@ -62,7 +62,7 @@ void SensorTSLClass::readSensor() {
 }
 
 
-float SensorTSLClass::getIrPercentage( unsigned int broadband, unsigned int ir ) {
+float SensorTSL::getIrPercentage( unsigned int broadband, unsigned int ir ) {
 	if ( broadband > 0 && ir > 0 ) {
 		float irPtc = (float) ir / ( broadband + ir ) * 100.0;
 		return irPtc;
@@ -72,7 +72,7 @@ float SensorTSLClass::getIrPercentage( unsigned int broadband, unsigned int ir )
 }
 
 
-bool SensorTSLClass::isSensorAlive() {
+bool SensorTSL::isSensorAlive() {
 	bool alive = isSetup && sensorTSLlight.isSensorAlive() && sensorTSLirPct.isSensorAlive();
 	return alive;
 }

@@ -7,7 +7,7 @@ extern HomieNode EnvironmentNode;
 Adafruit_CCS811 ccs;
 
 
-void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter, uint16_t warmedUpAfter ) {
+void SensorCCS::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter, uint16_t warmedUpAfter ) {
 	isSetup = true;
 	isConnected = false;
 	sensorWarmedUp = false;
@@ -24,7 +24,7 @@ void SensorCCSClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16
 }
 
 
-void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
+void SensorCCS::handle( float calibTemp, float calibHumidity) {
 	if ( isSetup ) {
 		this->calibTemp = calibTemp;
 		this->calibHumidity = calibHumidity;
@@ -45,7 +45,7 @@ void SensorCCSClass::handle( float calibTemp, float calibHumidity) {
 }
 
 
-void SensorCCSClass::reconnect() {
+void SensorCCS::reconnect() {
 	if ( ccs.begin() ) {
 		LOG_NOTICE( "CSS", "Sensor is connected" );
 		isConnected = true;
@@ -55,7 +55,7 @@ void SensorCCSClass::reconnect() {
 }
 
 
-void SensorCCSClass::readSensor() {
+void SensorCCS::readSensor() {
 	if ( isConnected ) {
 		if ( !ccs.readData() ) {
 			if ( ccs.geteCO2() >= 400 && ccs.geteCO2() <= 8192 ) {
@@ -82,7 +82,7 @@ void SensorCCSClass::readSensor() {
 }
 
 
-void SensorCCSClass::doCalibrate() {
+void SensorCCS::doCalibrate() {
 	if ( calibTemp != 0 && calibHumidity != 0 ) {
 		LOG_NOTICE( "CCS", "Calibrating sensor with temp = " << calibTemp << " C and humidity = " << calibHumidity << " %" );
 		ccs.setEnvironmentalData( calibHumidity, calibTemp );
@@ -92,7 +92,7 @@ void SensorCCSClass::doCalibrate() {
 }
 
 
-bool SensorCCSClass::isSensorAlive() {
+bool SensorCCS::isSensorAlive() {
 	bool alive = ( isSetup && sensorWarmedUp && sensorCCSco2.isSensorAlive() && sensorCCStvoc.isSensorAlive() );
 	return alive;
 }

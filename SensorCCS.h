@@ -3,19 +3,19 @@
 
 #include <Arduino.h>
 #include "Timing.h"
-#include "GenericSensor.h"
+#include "SensorGeneric.h"
 
 #define CCS_ADDR		0x5A
 #define CCS_CALIB_FREQ  1000 
 #define CCS_RECONNECTION_TIME 5
 
-class SensorCCSClass
+class SensorCCS
 {
  protected:
 	 bool isSetup = false;
 	 bool isConnected = false;
-	 GenericSensorClass sensorCCSco2;
-	 GenericSensorClass sensorCCStvoc;
+	 SensorGeneric sensorCCSco2;
+	 SensorGeneric sensorCCStvoc;
 
 	 Timing connectionTimer;
 	 Timing reportTimer;

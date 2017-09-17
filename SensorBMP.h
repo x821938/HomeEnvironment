@@ -3,15 +3,15 @@
 
 #include <Arduino.h>
 #include "Timing.h"
-#include "GenericSensor.h"
+#include "SensorGeneric.h"
 
 
-class SensorBMPClass
+class SensorBMP
 {
  protected:
 	 bool isSetup = false;
-	 GenericSensorClass sensorBMPpressure;
-	 GenericSensorClass sensorBMPtemp;
+	 SensorGeneric sensorBMPpressure;
+	 SensorGeneric sensorBMPtemp;
 
 	 Timing meassureTimer;
 

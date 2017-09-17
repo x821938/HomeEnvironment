@@ -1,5 +1,5 @@
-#ifndef _GENERICSENSOR_h
-#define _GENERICSENSOR_h
+#ifndef _SENSORGENERIC_h
+#define _SENSORGENERIC_h
 
 #include <Arduino.h>
 #include "Timing.h"
@@ -11,7 +11,7 @@ enum SensorType {
 };
 
 
-class GenericSensorClass
+class SensorGeneric
 {
  protected:
 	 bool isSetup = false;

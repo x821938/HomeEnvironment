@@ -1,11 +1,11 @@
-#include "GenericSensor.h"
+#include "SensorGeneric.h"
 #include "Logging.h"
 #include "Homie.h"
 
 extern HomieNode EnvironmentNode;
 
 
-void GenericSensorClass::connect(const char *sensorName, const char *mqttName, const char *dataDesc, const char *dataUnit, SensorType sensorType, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+void SensorGeneric::connect(const char *sensorName, const char *mqttName, const char *dataDesc, const char *dataUnit, SensorType sensorType, uint16_t reportFreq, uint16_t deviceLostAfter ) {
 	isSetup = true;
 
 	_sensorName = new char[strlen( sensorName ) + 1];
@@ -26,12 +26,12 @@ void GenericSensorClass::connect(const char *sensorName, const char *mqttName, c
 }
 
 
-void GenericSensorClass::handle() {
+void SensorGeneric::handle() {
 	if ( isSetup && reportTimer.triggered() ) sendData();
 }
 
 
-void GenericSensorClass::addIncomingData( float value ) {
+void SensorGeneric::addIncomingData( float value ) {
 	if ( isSetup ) {
 		lastDataReceivedAt = millis();
 		LOG_INFO( _sensorName, _dataDesc << " = " << value << " " << _dataUnit );
@@ -42,7 +42,7 @@ void GenericSensorClass::addIncomingData( float value ) {
 }
 
 
-float GenericSensorClass::getAvgValue() {
+float SensorGeneric::getAvgValue() {
 	if ( dataMeasurements > 0 ) {
 		float dataAverage = dataAcc / dataMeasurements;
 		return dataAverage;
@@ -52,7 +52,7 @@ float GenericSensorClass::getAvgValue() {
 }
 
 
-void GenericSensorClass::sendData() {
+void SensorGeneric::sendData() {
 	if ( dataMeasurements > 0 ) {
 		if ( _sensorType == AVERAGE ) {
 			float avgValue = getAvgValue();
@@ -69,7 +69,7 @@ void GenericSensorClass::sendData() {
 }
 
 
-bool GenericSensorClass::isSensorAlive() {
+bool SensorGeneric::isSensorAlive() {
 	bool alive = isSetup && ( millis() - lastDataReceivedAt < _deviceLostAfter );
 	return alive;
 }

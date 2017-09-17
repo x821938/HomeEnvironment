@@ -3,18 +3,18 @@
 
 #include <Arduino.h>
 #include "Timing.h"
-#include "GenericSensor.h"
+#include "SensorGeneric.h"
 
 #define SAMPLE_TIME 2 // 2=402ms most precise from TSL sensor
 #define HIGH_GAIN_LIMIT 500 // going under XXX lux we turn up the gain.
 
 
-class SensorTSLClass
+class SensorTSL
 {
 protected:
 	 bool isSetup = false;
-	 GenericSensorClass sensorTSLlight;
-	 GenericSensorClass sensorTSLirPct;
+	 SensorGeneric sensorTSLlight;
+	 SensorGeneric sensorTSLirPct;
 
 	 Timing meassureTimer;
 

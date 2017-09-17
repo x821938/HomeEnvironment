@@ -5,7 +5,7 @@
 extern HomieNode EnvironmentNode;
 
 
-void SensorPIRClass::connect( uint16_t reportFreq ) {
+void SensorPIR::connect( uint16_t reportFreq ) {
 	isSetup = true;
 
 	reportTimer.setup( reportFreq * 1000 );
@@ -14,7 +14,7 @@ void SensorPIRClass::connect( uint16_t reportFreq ) {
 }
 
 
-void SensorPIRClass::handle() {
+void SensorPIR::handle() {
 	if ( isSetup ) {
 		bool pirValue = digitalRead( PIR_PIN ) == HIGH;
 		if ( pirValue != lastPirValue ) {
@@ -36,14 +36,14 @@ void SensorPIRClass::handle() {
 }
 
 
-void SensorPIRClass::sendPIR() {
+void SensorPIR::sendPIR() {
 	bool pirValue = digitalRead( PIR_PIN ) == HIGH;
 	EnvironmentNode.setProperty( "PIR" ).send( pirValue ? "true" : "false" );
 	LOG_NOTICE( "MQTT", "Sending PIR Pin Status = " << ( pirValue ? "true" : "false" ) );
 }
 
 
-void SensorPIRClass::sendPIRMotionTime() {
+void SensorPIR::sendPIRMotionTime() {
 	LOG_NOTICE( "MQTT", "Sending PIR motion time of " << motionTime << " s" );
 	EnvironmentNode.setProperty( "PIRmotiontime" ).send( String( motionTime ) );
 }

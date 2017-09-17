@@ -7,7 +7,7 @@ extern HomieNode EnvironmentNode;
 Adafruit_BMP085 bmp;
 
 
-void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+void SensorBMP::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
 	isSetup = true;
 
 	sensorBMPpressure.connect( "BMP", "pressure", "pressure", "mbar", AVERAGE, reportFreq, deviceLostAfter );
@@ -18,7 +18,7 @@ void SensorBMPClass::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16
 }
 
 
-void SensorBMPClass::reconnect() {
+void SensorBMP::reconnect() {
 	if ( bmp.begin() ) {
 		LOG_NOTICE( "BMP", "Sensor setup completed" );
 	} else {
@@ -27,7 +27,7 @@ void SensorBMPClass::reconnect() {
 }
 
 
-void SensorBMPClass::handle() {
+void SensorBMP::handle() {
 	if ( isSetup ) {
 		if ( meassureTimer.triggered() ) {
 			readTemp();
@@ -39,7 +39,7 @@ void SensorBMPClass::handle() {
 }
 
 
-void SensorBMPClass::readTemp() {
+void SensorBMP::readTemp() {
 	float temperature = bmp.readTemperature();
 	if ( temperature < 60 && temperature > -30 ) {
 		sensorBMPtemp.addIncomingData( temperature );
@@ -50,7 +50,7 @@ void SensorBMPClass::readTemp() {
 }
 
 
-void SensorBMPClass::readPressure() {
+void SensorBMP::readPressure() {
 	float pressure = bmp.readPressure() / 100.0;
 	if ( pressure > 800 && pressure < 1100 ) {
 		sensorBMPpressure.addIncomingData( pressure );
@@ -62,7 +62,7 @@ void SensorBMPClass::readPressure() {
 
 
 
-bool SensorBMPClass::isSensorAlive() {
+bool SensorBMP::isSensorAlive() {
 	bool alive = ( isSetup && sensorBMPpressure.isSensorAlive() && sensorBMPtemp.isSensorAlive() );
 	return alive;
 }

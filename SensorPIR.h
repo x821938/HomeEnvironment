@@ -7,7 +7,7 @@
 #define PIR_PIN	D0
 
 
-class SensorPIRClass
+class SensorPIR
 {
  protected:
 	 bool isSetup = false;

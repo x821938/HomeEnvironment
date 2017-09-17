@@ -49,13 +49,13 @@
     <ClInclude Include="External\SPISlave.h">
       <Filter>Header Files\External</Filter>
     </ClInclude>
-    <ClInclude Include="SPI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GenericSensor.h">
+    <ClInclude Include="I2Cslave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SensorGeneric.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -78,13 +78,13 @@
     <ClCompile Include="External\SPISlave.cpp">
       <Filter>Source Files\External</Filter>
     </ClCompile>
-    <ClCompile Include="SPI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Timing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GenericSensor.cpp">
+    <ClCompile Include="I2Cslave.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SensorGeneric.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
