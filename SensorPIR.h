@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "Timing.h"
 
-#define PIR_PIN	D0
+#define PIR_PIN	16
 
 
 class SensorPIR
@@ -15,8 +15,8 @@ class SensorPIR
 	 Timing reportTimer;
 
 	 bool lastPirValue = 0;
-	 long motionTime = 0;
-	 long motionStartedAt = 0;
+	 unsigned long motionTime = 0;
+	 unsigned long motionStartedAt = 0;
 
 	 void sendPIR();
 	 void sendPIRMotionTime();

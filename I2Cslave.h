@@ -6,7 +6,7 @@
 
 #define I2C_SLAVE_ADDR 8
 #define I2C_STRETCH 80000 // Crazy high, but otherwise it doesn't work....
-#define I2C_GOT_DATA_PIN D6
+#define I2C_GOT_DATA_PIN 12
 
 struct I2Cframe {
 	float data;

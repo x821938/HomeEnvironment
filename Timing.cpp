@@ -1,10 +1,10 @@
 #include "Timing.h"
 
 
-long Timing::globalLastTriggered = millis();
+unsigned long Timing::globalLastTriggered = millis();
 
 
-void Timing::setup( long triggerFreq ) {
+void Timing::setup( unsigned long triggerFreq ) {
 	_triggerFreq = triggerFreq;
 	lastTriggered = millis();
 }

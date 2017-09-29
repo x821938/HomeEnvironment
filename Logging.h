@@ -26,7 +26,7 @@ template<class T> inline Print &operator <<( Print &obj, T arg ) {
 	#define MS_IN_SECOND  1000
 	#define LOG_FORMAT_TIME do \
 	{ \
-		long logTime = millis(); \
+		unsigned long logTime = millis(); \
 		unsigned short days = logTime / MS_IN_DAY; \
 		unsigned char hours = ( logTime % MS_IN_DAY ) / MS_IN_HOUR; \
 		unsigned char minutes = ( ( logTime % MS_IN_DAY ) % MS_IN_HOUR ) / MS_IN_MINUTE; \

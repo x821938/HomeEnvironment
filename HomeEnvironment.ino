@@ -73,7 +73,7 @@ void homieHandlerSetup() {
 	sensorPIR.connect( 30 );
 
 	// Reporting of sensor availability
-	availReportTimer.setup( (long) AVAIL_REPORT_FREQ * 1000 );
+	availReportTimer.setup( (unsigned long) AVAIL_REPORT_FREQ * 1000 );
 }
 
 

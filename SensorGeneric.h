@@ -22,12 +22,12 @@ class SensorGeneric
 	 char* _dataDesc;
 	 char* _dataUnit;
 	 SensorType _sensorType;
-	 long _deviceLostAfter;
+	 unsigned long _deviceLostAfter;
 
 	 float dataAcc = 0;
 	 uint16_t dataMeasurements = 0;
 	 float dataMax = 0;
-	 long lastDataReceivedAt;
+	 unsigned long lastDataReceivedAt;
 
 	 void sendData();
  public:

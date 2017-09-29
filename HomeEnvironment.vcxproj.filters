@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\External">
-      <UniqueIdentifier>{987181c9-a628-4868-81c3-7d78ac84e672}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\External">
-      <UniqueIdentifier>{46e5af19-2b9c-4e6c-9e79-cc75a52e7f60}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="HomeEnvironment.ino" />
@@ -43,12 +37,6 @@
     <ClInclude Include="Logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="External\hspi_slave.h">
-      <Filter>Header Files\External</Filter>
-    </ClInclude>
-    <ClInclude Include="External\SPISlave.h">
-      <Filter>Header Files\External</Filter>
-    </ClInclude>
     <ClInclude Include="Timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -71,12 +59,6 @@
     </ClCompile>
     <ClCompile Include="SensorPIR.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="External\hspi_slave.c">
-      <Filter>Source Files\External</Filter>
-    </ClCompile>
-    <ClCompile Include="External\SPISlave.cpp">
-      <Filter>Source Files\External</Filter>
     </ClCompile>
     <ClCompile Include="Timing.cpp">
       <Filter>Source Files</Filter>

@@ -35,12 +35,10 @@ void SensorCCS::handle( float calibTemp, float calibHumidity) {
 			LOG_NOTICE( "CCS", "Sensor now warmed up" );
 			sensorWarmedUp = true;
 		}
-		if ( sensorWarmedUp ) {
-			if ( meassureTimer.triggered() ) readSensor();
-			if ( calibrateTimer.triggered() ) doCalibrate();
-			sensorCCSco2.handle();
-			sensorCCStvoc.handle();
-		} 
+		if ( meassureTimer.triggered() ) readSensor();
+		if ( calibrateTimer.triggered() ) doCalibrate();
+		sensorCCSco2.handle();
+		sensorCCStvoc.handle();
 	}
 }
 
@@ -58,19 +56,18 @@ void SensorCCS::reconnect() {
 void SensorCCS::readSensor() {
 	if ( isConnected ) {
 		if ( !ccs.readData() ) {
+			float co2 = ccs.geteCO2();
+			float tvoc = ccs.getTVOC();
+
 			if ( ccs.geteCO2() >= 400 && ccs.geteCO2() <= 8192 ) {
-				float co2 = ccs.geteCO2();
-				sensorCCSco2.addIncomingData( co2 );
+				if ( sensorWarmedUp ) sensorCCSco2.addIncomingData( co2 );
 			} else {
-				LOG_ERROR( "CCS", "Could not get sane CO2 data" );
-				isConnected = false;
+				LOG_ERROR( "CCS", "Could not get sane CO2 data. Got " << co2 );
 			}
 			if ( ccs.getTVOC() >= 0 && ccs.getTVOC() <= 1187 ) {
-				float tvoc = ccs.getTVOC();
-				sensorCCStvoc.addIncomingData( tvoc );
+				if ( sensorWarmedUp ) sensorCCStvoc.addIncomingData( tvoc );
 			} else {
-				LOG_ERROR( "CCS", "Could not get sane TVOC data" );
-				isConnected = false;
+				LOG_ERROR( "CCS", "Could not get sane TVOC data. Got " << tvoc );
 			}
 		} else {
 			LOG_ERROR( "CCS", "Sensor could not read data" );
