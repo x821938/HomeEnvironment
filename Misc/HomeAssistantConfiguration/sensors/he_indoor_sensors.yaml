@@ -1,0 +1,52 @@
+- platform: mqtt
+  name: Temperature DHT
+  state_topic: "homies/homeenvironment/indoor/temperatureDHT"
+  unit_of_measurement: "C"
+- platform: mqtt
+  name: Temperature BMP
+  state_topic: "homies/homeenvironment/indoor/temperatureBMP"
+  unit_of_measurement: "C"
+- platform: mqtt
+  name: Humidity
+  state_topic: "homies/homeenvironment/indoor/humidity"
+  unit_of_measurement: "%"
+- platform: mqtt
+  name: Pressure
+  state_topic: "homies/homeenvironment/indoor/pressure"
+  unit_of_measurement: "mbar"
+- platform: mqtt
+  name: Light
+  state_topic: "homies/homeenvironment/indoor/light"
+  unit_of_measurement: "Lux"
+- platform: mqtt
+  name: PIR Motion Time
+  unit_of_measurement: "%"
+  state_topic: "homies/homeenvironment/indoor/PIRmotiontime"
+- platform: mqtt
+  name: CO2
+  unit_of_measurement: "ppm"
+  state_topic: "homies/homeenvironment/indoor/co2"
+- platform: mqtt
+  name: TVOC
+  unit_of_measurement: "ppb"
+  state_topic: "homies/homeenvironment/indoor/tvoc"
+- platform: mqtt
+  name: Average Sound Level
+  unit_of_measurement: "%"
+  state_topic: "homies/homeenvironment/indoor/avgvolume"
+- platform: mqtt
+  name: Max Sound Level
+  unit_of_measurement: "%"
+  state_topic: "homies/homeenvironment/indoor/maxvolume"
+- platform: mqtt
+  name: RMS Sound Level
+  unit_of_measurement: "%"
+  state_topic: "homies/homeenvironment/indoor/rmsvolume"
+- platform: mqtt
+  name: Dust Level
+  unit_of_measurement: "pcs/l"
+  state_topic: "homies/homeenvironment/indoor/dust"
+- platform: mqtt
+  unit_of_measurement: "Min"
+  name: Indoor Uptime
+  state_topic: "homies/homeenvironment/indoor/slaveuptime"

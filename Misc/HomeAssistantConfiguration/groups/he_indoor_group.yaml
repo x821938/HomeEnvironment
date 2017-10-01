@@ -1,0 +1,16 @@
+indoor:
+  view: true
+  name: Indoor
+  entities:
+    - sensor.Temperature_DHT
+    - sensor.Temperature_BMP
+    - sensor.Humidity
+    - sensor.Pressure
+    - sensor.Light
+    - sensor.CO2
+    - sensor.TVOC
+    - sensor.Average_Sound_Level
+    - sensor.Max_Sound_Level
+    - sensor.RMS_Sound_Level
+    - sensor.Dust_Level
+    - sensor.PIR_Motion_Time

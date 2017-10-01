@@ -1,0 +1,14 @@
+mqtt:
+  broker: !secret mqtt_broker
+  port: !secret mqtt_port
+  username: !secret mqtt_usr 
+  password: !secret mqtt_pass 
+  client_id: homeassistant
+
+influxdb:
+  host: !secret influx_host
+  username: !secret influx_user
+  password: !secret influx_pass
+
+group: !include_dir_merge_named groups
+sensor: !include_dir_merge_list sensors
