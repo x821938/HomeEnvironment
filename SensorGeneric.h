@@ -2,41 +2,41 @@
 #define _SENSORGENERIC_h
 
 #include <Arduino.h>
-#include "Timing.h"
 
 
-enum SensorType {
-	AVERAGE,
-	MAX
+enum SensorState {
+	SensorWarmup,
+	SensorRead,
+	SensorWaitMqtt,
+	SensorSend,
+	SensorSentMqtt
 };
 
 
-class SensorGeneric
-{
- protected:
-	 bool isSetup = false;
-	 Timing reportTimer;
 
-	 char* _sensorName;
-	 char* _mqttName;
-	 char* _dataDesc;
-	 char* _dataUnit;
-	 SensorType _sensorType;
-	 unsigned long _deviceLostAfter;
+class SensorGeneric {
+	protected:
+		SensorState sensorState;
+		unsigned long warmupStartetAt;
 
-	 float dataAcc = 0;
-	 uint16_t dataMeasurements = 0;
-	 float dataMax = 0;
-	 unsigned long lastDataReceivedAt;
+		double sensorValue = 0;
+		unsigned long warmupTime = 0;
+		String shortName;	// Used for debug logging
+		String mqttName;	// The name of the sensor presented over MQTT
+		String friendlyName; // Used for debug logging
+		String unit; // Used for debug logging
 
-	 void sendData();
- public:
-	 void connect( const char * sensorName, const char * mqttName, const char * dataDesc, const char * dataUnit, SensorType sensorType, uint16_t reportFreq, uint16_t deviceLostAfter );
-	 void handle();
-	 void addIncomingData( float value );
-	 float getAvgValue();
-	 bool isSensorAlive();
+		void sendValue();
+		virtual void readValue();
+
+	public:
+		void setup();
+		void setup( unsigned long warmupTime, String shortName, String friendlyName, String mqttName, String unit );
+		void handle();
+		void putValue( double value );
+		bool isValueSent();
+		bool isWarmedUp();
 };
+
 
 #endif
-

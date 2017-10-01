@@ -22,16 +22,7 @@
     <ClInclude Include="__vm\.HomeEnvironment.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SensorBMP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SensorCCS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SensorTSL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SensorPIR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logging.h">
@@ -40,33 +31,48 @@
     <ClInclude Include="Timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="I2Cslave.h">
+    <ClInclude Include="SensorGeneric.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SensorGeneric.h">
+    <ClInclude Include="SensorBMP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SensorCCS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomCCS811.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SlaveI2C.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SensorSlave.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="SensorTSL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Timing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SensorGeneric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="SensorBMP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SensorCCS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SensorTSL.cpp">
+    <ClCompile Include="CustomCCS811.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SensorPIR.cpp">
+    <ClCompile Include="SlaveI2C.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Timing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="I2Cslave.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SensorGeneric.cpp">
+    <ClCompile Include="SensorSlave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

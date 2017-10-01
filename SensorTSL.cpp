@@ -1,78 +1,103 @@
 #include "SensorTSL.h"
+#include "SensorGeneric.h"
 #include "Logging.h"
 #include <Homie.h>
 #include <SparkFunTSL2561.h>
 
-extern HomieNode EnvironmentNode;
+
 SFE_TSL2561 light;
 
 
-void SensorTSL::connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter ) {
+
+/* Setup basic information about sensor for use for GenericSensor class. */
+void SensorTSL::setup() {
+	warmupTime = 100;
+	shortName = "TSL";
+	friendlyName = "light";
+	mqttName = "light";
+	unit = "lux";
+
+	connect();
+	SensorGeneric::setup();
 	isSetup = true;
-
-	sensorTSLlight.connect( "TSL", "light", "light", "lux", AVERAGE, reportFreq, deviceLostAfter );
-	sensorTSLirPct.connect( "TSL", "IRpercentage", "IR percentage", "%", AVERAGE, reportFreq, deviceLostAfter );
-
-	meassureTimer.setup( meassureFreq * 1000 );
-	reconnect();
 }
 
 
-void SensorTSL::handle() {
-	if ( isSetup ) {
-		if ( meassureTimer.triggered() ) readSensor();
-		sensorTSLlight.handle();
-		sensorTSLirPct.handle();
-	}
-}
 
-
-void SensorTSL::reconnect() {
+/* Initializes the physical light sensor TSL2541 */
+void SensorTSL::connect() {
 	light.begin();
-	light.setTiming( gain, SAMPLE_TIME, sampledTime );
+	light.setTiming( gain, sampleTime, measuredSampledTime );
 	light.setPowerUp();
-	LOG_NOTICE( "TSL", "Sensor setup completed" );
+	LOG_INFO( shortName, "Sensor connected" );
+
+	tslState = MS13_GAIN_1X; // Start the senser with the least sensitivity - We expect sun!
+	nextReadAt = millis(); // The first reading we can do immediately
 }
 
-void SensorTSL::readSensor() {
-	unsigned int broadbandRaw, irRaw;
-	double lux;
 
-	if ( light.getData( broadbandRaw, irRaw ) ) {
-		if ( light.getLux( gain, sampledTime, broadbandRaw, irRaw, lux ) ) {
-			sensorTSLlight.addIncomingData( lux );
-			LOG_DEBUG( "TSL", "Raw Broadband Light = " << broadbandRaw );
-			LOG_DEBUG( "TSL", "Raw Infrared Light = " << irRaw );
-			sensorTSLirPct.addIncomingData( getIrPercentage( broadbandRaw, irRaw ) );
-			if ( lux < HIGH_GAIN_LIMIT && gain == 0 ) {
-				LOG_WARNING( "TSL", "Light is less than " << HIGH_GAIN_LIMIT << ". Raising gain to 16X" );
-				gain = 1;
-				light.setTiming( gain, SAMPLE_TIME, sampledTime );
+
+/* Reads the light value from the sensor. If unsuccessful it tries to reinitialize it */
+void SensorTSL::readValue() {
+	if ( isSetup ) {
+		unsigned int broadbandRaw, irRaw;
+		double lux;
+
+		if ( millis() > nextReadAt ) { // Only do a reading when it has done it's full sampling.
+			if ( light.getData( broadbandRaw, irRaw ) ) {
+				if ( findGain( broadbandRaw, irRaw ) ) { // If we found a suitable gain, we can start using the data
+					if ( light.getLux( gain, measuredSampledTime, broadbandRaw, irRaw, lux ) ) {
+						sensorValue = lux;
+						LOG_INFO( shortName, "Got a light reading of " << sensorValue << " lux" );
+					} else { // If we end up here we have a solar nuclear explsion
+						LOG_ERROR( shortName, "Sensor too satuated!" );
+						sensorValue = NAN;
+					}
+					sensorState = SensorWaitMqtt; // Queue value up for sending
+				}
+			} else {
+				byte error = light.getError();
+				LOG_ERROR( shortName, "HW Error code = " << error );
+				connect();
 			}
-		} else {
-			LOG_WARNING( "TSL", "Sensor too satuated. Lowering Gain to 1X" );
-			gain = 0; // 1x gain
-			light.setTiming( gain, SAMPLE_TIME, sampledTime );
 		}
-	} else {
-		byte error = light.getError();
-		LOG_ERROR( "TSL", "Error code = " << error );
-		reconnect();
 	}
 }
 
 
-float SensorTSL::getIrPercentage( unsigned int broadband, unsigned int ir ) {
-	if ( broadband > 0 && ir > 0 ) {
-		float irPtc = (float) ir / ( broadband + ir ) * 100.0;
-		return irPtc;
+
+/* Takes the raw values from the sensor as input. If they are too low, the sampletime will be raised little by little.
+   If that is not enough then the 16x gain is finally turned on.
+   Returns false if the reading is insuffiscient and a new reading is needed. Returns true when the reading is fine and can be interpreted */
+bool SensorTSL::findGain( uint16_t broadbandRaw, uint16_t irRaw ) {
+	LOG_DEBUG( "TSL", "Sample time = " << sampleTimeMs[sampleTime] << " ms. Gain = " << gain << ". Broadband raw = " << broadbandRaw << ". IR raw = " << irRaw );
+	if ( broadbandRaw < GAIN_INCREASE_LIMIT || irRaw < GAIN_INCREASE_LIMIT ) {
+		switch ( tslState ) {
+			case MS13_GAIN_1X:
+				tslState = MS101_GAIN_1X;
+				nextReadAt = millis() + 101 + 10; // Give time for sampling plus a little slack
+				sampleTime = 1;
+				LOG_DEBUG( "TSL", "Readings too low, increasing sample time to " << sampleTimeMs[sampleTime] << " ms" );
+				break;
+			case MS101_GAIN_1X:
+				tslState = MS402_GAIN_1X;
+				nextReadAt = millis() + 402 + 10; // Give time for sampling plus a little slack
+				sampleTime = 2;
+				LOG_DEBUG( "TSL", "Readings too low, increasing sample time to " << sampleTimeMs[sampleTime] << " ms" );
+				break;
+			case MS402_GAIN_1X:
+				tslState = MS402_GAIN_16X;
+				nextReadAt = millis() + 402 + 10; // Give time for sampling plus a little slack
+				gain = 1;
+				LOG_DEBUG( "TSL", "Readings too low, increasing sample time to " << sampleTimeMs[sampleTime] << " ms" );
+				break;
+			case MS402_GAIN_16X:
+				return true;
+		}
+		light.setTiming( gain, sampleTime, measuredSampledTime );
+		return false;
 	} else {
-		return 0;
+		light.setTiming( 0, 0, measuredSampledTime ); // Reset gain & sampletime on sensor so it's ready for next wakeup
+		return true;
 	}
-}
-
-
-bool SensorTSL::isSensorAlive() {
-	bool alive = isSetup && sensorTSLlight.isSensorAlive() && sensorTSLirPct.isSensorAlive();
-	return alive;
 }

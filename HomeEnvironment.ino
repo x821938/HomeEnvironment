@@ -1,113 +1,105 @@
-#define AVAIL_REPORT_FREQ 30
-
 #include <user_interface.h>
 #include "Logging.h"
-#include "I2Cslave.h"
 #include "Timing.h"
 #include <Homie.h>
 #include <Wire.h>
 
 #include "SensorGeneric.h"
-#include "SensorPIR.h"
 #include "SensorTSL.h"
-#include "SensorCCS.h"
 #include "SensorBMP.h"
+#include "SensorCCS.h"
+#include "SensorSlave.h"
 
 
-I2C i2c;
-Timing availReportTimer;
+#define SLEEP_TIME 120	// Time between each wakeup of device. Keep as long as possible to save power. ESP is hungry
+#define PANIC_TIME 10	// After this time without sending all data, just go to sleep. Keep power down if a sensor is broken.		
+
+
 HomieNode EnvironmentNode( "indoor", "indoor" );
+SensorTSL sensorTSL;		// Light
+SensorBMP sensorBMP;		// Pressure and temperature
+SensorCCS sensorCCS;		// CO2 and TVOC
+SensorSlave sensorSlave;	// All slave sensors on atmega via i2c
 
-SensorPIR sensorPIR; // Motion
-SensorTSL sensorTSL; // Light
-SensorCCS sensorCCS; // Co2 and TVOC
-SensorBMP sensorBMP; // Pressure and temperature
-SensorGeneric sensorDHTtemp;
-SensorGeneric sensorDHThumidity;
-SensorGeneric sensorPPDdust;
-SensorGeneric sensorMHZco2;
-SensorGeneric sensorMICvol;
-SensorGeneric sensorMICrms;
-SensorGeneric sensorMICmax;
+
+volatile bool mqttConnected = false; // This is set by ISR when homie is ready to send mqtt messages
+uint8_t bootReason; // Global readable bootreason - for now it's for SensorCCS class.
 
 
 
 void setup() {
-	Serial.begin( 115200 );
-
+	Serial.begin( 115200 ); Serial.println();
+	getBootReason();
 
 	// I2C settings ( remember to change twi_setClockStretchLimit from 230 to 460 in core_esp8266_si2c.c... Workaround for CCS881 Sensor )
 	Wire.begin( SDA, SCL );
 	Wire.setClock( 100000L ); 
 
-
 	// Homie setup
 	Homie_setFirmware( "homeenvironment", "1.0.0" );
-	Homie.setSetupFunction( homieHandlerSetup ).setLoopFunction( homieHandlerLoop );
 	Homie.disableResetTrigger();
 	Homie.disableLedFeedback();
+	Homie.disableLogging();
+	Homie.onEvent( onHomieEvent );
 	Homie.setup();
+
+	// Sensors
+	sensorTSL.setup();
+	sensorBMP.setup();
+	sensorCCS.setup();
+	sensorSlave.setup();
 }
 
 
+
+/* Handles all sensors. If all sensors has sent their data over MQTT a deep sleep is requested 
+   If all sensors havn't sent all their data before PANIC_TIME, we deep sleep anyway */
 void loop() {
+	static bool sleepOrdered = false;
+
 	Homie.loop();
-}
-
-void homieHandlerSetup() {
-	i2c.setup();
-
-	// Remote SPI sensors connected to "Arduino Pro Mini"
-	sensorDHTtemp.connect( "DHT", "temperatureDHT", "temperature", "C", AVERAGE, 30, 30 );
-	sensorDHThumidity.connect( "DHT", "humidity", "humidity", "%", AVERAGE, 30, 30 );
-	sensorPPDdust.connect( "PPD", "dust", "dust level", "pcs/l", AVERAGE, 300, 600 );
-	sensorMHZco2.connect( "MHZ", "mhzco2", "Co2 concentration", "ppm", AVERAGE, 30, 30 );
-	sensorMICvol.connect( "MIC", "avgvolume", "Avg volume", "%", AVERAGE, 30, 30 );
-	sensorMICrms.connect( "MIC", "rmsvolume", "RMS volume", "%", AVERAGE, 30, 30 );
-	sensorMICmax.connect( "MIC", "maxvolume", "Max volume", "%", MAX, 30, 30 );
-
-	// Local Sensors connected to ESP
-	sensorCCS.connect( 5, 30, 30, 1200 );
-	sensorTSL.connect( 5, 30, 30 ); 
-	sensorBMP.connect( 5, 30, 30 ); 
-	sensorPIR.connect( 30 );
-
-	// Reporting of sensor availability
-	availReportTimer.setup( (unsigned long) AVAIL_REPORT_FREQ * 1000 );
-}
-
-
-void homieHandlerLoop() {
-	if ( Homie.isConnected() ) {
-		sensorDHTtemp.handle();
-		sensorDHThumidity.handle();
-		sensorPPDdust.handle();
-		sensorMHZco2.handle();
-		sensorMICvol.handle();
-		sensorMICrms.handle();
-		sensorMICmax.handle();
-		sensorBMP.handle();
-		sensorCCS.handle( sensorDHTtemp.getAvgValue(), sensorDHThumidity.getAvgValue() );
+	if ( !sleepOrdered ) {
 		sensorTSL.handle();
-		sensorPIR.handle();
-		i2c.handle();
-		if ( availReportTimer.triggered() ) reportSensorAvailability();
+		sensorBMP.handle();
+		sensorCCS.handle();
+		sensorSlave.handle();
+
+		if ( sensorTSL.isValueSent() && sensorBMP.isValueSent() && sensorCCS.isValueSent() && sensorSlave.isValueSent() ) {
+			sensorCCS.calibrate( sensorSlave.getHumidity(), sensorSlave.getTemperature() ); // Calibrate the CCS sensor before sleeping
+			Homie.prepareToSleep(); // If all sensors have delivered their data, we can now request a deep sleep
+			sleepOrdered = true; // We only want to instruct homie once to do a deep sleep
+		}
+		if ( millis() > PANIC_TIME * 1000UL ) {
+			LOG_CRITICAL( "HOM", "We havn't got data from all sensors - some hardware is broken." );
+			Homie.prepareToSleep();
+			sleepOrdered = true;
+		}
 	}
 }
 
 
-// Send the status of all sensors in one byte. Each bit represents a sensor
-void reportSensorAvailability() {
-	bool microphoneAlive = sensorMICvol.isSensorAlive() && sensorMICrms.isSensorAlive() && sensorMICmax.isSensorAlive();
-	uint8_t status						=			0b00000000;
-	status += sensorDHThumidity.isSensorAlive() ?	0b00000001 : 0;
-	status += sensorDHTtemp.isSensorAlive() ?		0b00000010 : 0;
-	status += sensorTSL.isSensorAlive() ?			0b00000100 : 0;
-	status += sensorCCS.isSensorAlive() ?			0b00001000 : 0;
-	status += microphoneAlive ?						0b00010000 : 0;
-	status += sensorPPDdust.isSensorAlive() ?		0b00100000 : 0;
-	status += sensorBMP.isSensorAlive() ?			0b01000000 : 0;
-	status += sensorMHZco2.isSensorAlive() ?		0b10000000 : 0;
-	LOG_NOTICE( "MQTT", "Sending status of all sensors: " << status );
-	EnvironmentNode.setProperty( "sensorstatus" ).send( String( status ) );
+
+/* All events from homie is going to this handler */
+void onHomieEvent( const HomieEvent& event ) {
+	switch ( event.type ) {
+		case HomieEventType::MQTT_CONNECTED:
+			LOG_NOTICE( "HOM", "MQTT connected" );
+			mqttConnected = true;
+			break;
+		case HomieEventType::READY_TO_SLEEP:
+			LOG_NOTICE( "HOM", "Going to sleep now for " << SLEEP_TIME << " seconds" );
+			ESP.deepSleep( 1000000UL * SLEEP_TIME );
+			break;
+	}
+}
+
+
+
+/* Checks how device is booted. Bootcode is used in order to avoid unnecessary CCS811 sensor reset.
+   We are interested in code5 which means ESP has woken up from a deep sleep */
+void getBootReason() {
+	rst_info *resetInfo;
+	resetInfo = ESP.getResetInfoPtr();
+	bootReason = ( *resetInfo ).reason;
+	LOG_NOTICE( "ESP", "Booted with reason code: " << bootReason );
 }

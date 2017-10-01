@@ -6,24 +6,25 @@
 #include "SensorGeneric.h"
 
 
+
 class SensorBMP
 {
- protected:
-	 bool isSetup = false;
-	 SensorGeneric sensorBMPpressure;
-	 SensorGeneric sensorBMPtemp;
+	protected:
+		bool isSetup;
 
-	 Timing meassureTimer;
+		SensorGeneric sensorBMPpressure;
+		SensorGeneric sensorBMPtemp;
 
-	 void reconnect();
-	 void readTemp();
-	 void readPressure();
+		void connect();
+		void readTemp();
+		void readPressure();
 
- public:
-	void connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t lostAfter );
-	void handle();
-	bool isSensorAlive();
+	public:
+		void setup();
+		void handle();
+		bool isValueSent();
 };
+
 
 #endif
 

@@ -5,39 +5,30 @@
 #include "Timing.h"
 #include "SensorGeneric.h"
 
-#define CCS_ADDR		0x5A
-#define CCS_CALIB_FREQ  1000 
-#define CCS_RECONNECTION_TIME 5
+#define CCS_I2C_ADDR 0x5A
+#define CCS_CALIB_FREQ  1000 //TODO: calibration
+
+
 
 class SensorCCS
 {
- protected:
-	 bool isSetup = false;
-	 bool isConnected = false;
-	 SensorGeneric sensorCCSco2;
-	 SensorGeneric sensorCCStvoc;
+	protected:
+		 bool isSetup = false;
+		 bool isConnected = false;
+		 bool needsReset;
 
-	 Timing connectionTimer;
-	 Timing reportTimer;
-	 Timing meassureTimer;
-	 Timing warmupTimer;
-	 Timing calibrateTimer;
+		 SensorGeneric sensorCCSco2;
+		 SensorGeneric sensorCCStvoc;
 
-	 bool sensorWarmedUp = false;
+		 void connect();
+		 void readSensor();
 
-	 float calibTemp;
-	 float calibHumidity;
-
-	 void reconnect();
-	 void readSensor();
-	 void doCalibrate();
-
- public:
-	void connect( uint16_t meassureFreq, uint16_t reportFreq, uint16_t deviceLostAfter, uint16_t warmedUpAfter );
-	void handle( float calibTemp, float calibHumidity );
-	bool isSensorAlive();
+	public:
+		void setup();
+		void handle();
+		bool isValueSent();
+		void calibrate( float humidity, float temperature );
 };
 
 
 #endif
-
