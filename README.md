@@ -21,4 +21,4 @@ In the blog you will find all the information needed to collect and present the 
 
 You will be able to get data like this:
 
-![Grafana Example](https://www.cron.dk/home-environment-part-1/he_sensors/)
+![Grafana Example](https://www.cron.dk/wp-content/uploads/2017/10/he_sensors.jpg)
