@@ -53,6 +53,7 @@ void SensorTSL::readValue() {
 						LOG_ERROR( shortName, "Sensor too satuated!" );
 						sensorValue = NAN;
 					}
+					light.setTiming( 0, 0, measuredSampledTime ); // Reset gain & sampletime on sensor so it's ready for next wakeup
 					sensorState = SensorWaitMqtt; // Queue value up for sending
 				}
 			} else {
@@ -97,7 +98,6 @@ bool SensorTSL::findGain( uint16_t broadbandRaw, uint16_t irRaw ) {
 		light.setTiming( gain, sampleTime, measuredSampledTime );
 		return false;
 	} else {
-		light.setTiming( 0, 0, measuredSampledTime ); // Reset gain & sampletime on sensor so it's ready for next wakeup
 		return true;
 	}
 }

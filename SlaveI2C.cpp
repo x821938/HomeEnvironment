@@ -21,6 +21,7 @@ bool SlaveI2C::pollData( const uint8_t i2cAddr, const char cmd, void* receiveVar
 		*( (byte*) receiveVar + index++ ) = Wire.read();
 	}
 	debug( receiveVar, varSize, "Received", i2cAddr );
+	delay( 10 ); // Give the slave time
 
 	if ( index != varSize ) { // i2c slave didn't respond nicely
 		LOG_ERROR( "I2C", "Unexpected amount of data received" );

@@ -2,17 +2,19 @@
 #include "Logging.h"
 #include <Homie.h>
 #include "CustomCCS811.h"
+#include "SlaveI2C.h"
+#include "SensorSlave.h"
 
 
-extern uint8_t bootReason;
 extern HomieNode EnvironmentNode;
+extern SlaveI2C i2c;
 Adafruit_CCS811 ccs;
 
 
 
 /* Setup two generic sensors one for co2 and one for tvoc */
 void SensorCCS::setup() {
-	needsReset = bootReason != 5; // Reset sensor if we didn't wake up from a deep-sleep (like normal power up or wdt)
+	shouldSensorBeReset();
 
 	isConnected = false;
 	connect();
@@ -48,6 +50,15 @@ void SensorCCS::connect() {
 	} else {
 		LOG_ERROR( "CCS", "Sensor connection failed" );
 	}
+}
+
+
+
+/* We call the slave with the command B. If it returns 1 it means that it is just booted and we need to reset the CCS sensor */
+void SensorCCS::shouldSensorBeReset() {
+	float readValue;
+	i2c.pollData( I2C_SLAVE_ADDRESS, 'B', &readValue, sizeof( readValue ) );
+	needsReset = readValue;
 }
 
 

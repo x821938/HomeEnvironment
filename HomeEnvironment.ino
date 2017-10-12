@@ -3,6 +3,7 @@
 #include "Timing.h"
 #include <Homie.h>
 #include <Wire.h>
+#include "SlaveI2C.h"
 
 #include "SensorGeneric.h"
 #include "SensorTSL.h"
@@ -11,11 +12,11 @@
 #include "SensorSlave.h"
 
 
-#define SLEEP_TIME 120	// Time between each wakeup of device. Keep as long as possible to save power. ESP is hungry
 #define PANIC_TIME 10	// After this time without sending all data, just go to sleep. Keep power down if a sensor is broken.		
 
 
 HomieNode EnvironmentNode( "indoor", "indoor" );
+SlaveI2C i2c;
 SensorTSL sensorTSL;		// Light
 SensorBMP sensorBMP;		// Pressure and temperature
 SensorCCS sensorCCS;		// CO2 and TVOC
@@ -23,13 +24,11 @@ SensorSlave sensorSlave;	// All slave sensors on atmega via i2c
 
 
 volatile bool mqttConnected = false; // This is set by ISR when homie is ready to send mqtt messages
-uint8_t bootReason; // Global readable bootreason - for now it's for SensorCCS class.
 
 
 
 void setup() {
 	Serial.begin( 115200 ); Serial.println();
-	getBootReason();
 
 	// I2C settings ( remember to change twi_setClockStretchLimit from 230 to 460 in core_esp8266_si2c.c... Workaround for CCS881 Sensor )
 	Wire.begin( SDA, SCL );
@@ -87,19 +86,11 @@ void onHomieEvent( const HomieEvent& event ) {
 			mqttConnected = true;
 			break;
 		case HomieEventType::READY_TO_SLEEP:
-			LOG_NOTICE( "HOM", "Going to sleep now for " << SLEEP_TIME << " seconds" );
-			ESP.deepSleep( 1000000UL * SLEEP_TIME );
+			LOG_DEBUG( "SLV", "Telling slave that we are soon going to sleep" );
+			float readValue;  i2c.pollData( I2C_SLAVE_ADDRESS, 'Z', &readValue, sizeof( readValue ) );
+
+			LOG_NOTICE( "HOM", "Going to sleep now until slave wakes us up" );
+			ESP.deepSleep( 0 ); // No time is needed here - i2c slave controls this
 			break;
 	}
-}
-
-
-
-/* Checks how device is booted. Bootcode is used in order to avoid unnecessary CCS811 sensor reset.
-   We are interested in code5 which means ESP has woken up from a deep sleep */
-void getBootReason() {
-	rst_info *resetInfo;
-	resetInfo = ESP.getResetInfoPtr();
-	bootReason = ( *resetInfo ).reason;
-	LOG_NOTICE( "ESP", "Booted with reason code: " << bootReason );
 }

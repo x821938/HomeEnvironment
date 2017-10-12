@@ -3,6 +3,8 @@
 #include <Homie.h>
 #include "Logging.h"
 
+extern SlaveI2C i2c;
+
 
 
 /* Sets up a generic sensor instance for each of the sensor values on the ATmega slave device 
@@ -16,9 +18,6 @@ void SensorSlave::setup() {
 	sensorDHThum.setup( SLAVE_WAIT_TIME, "DHT", "humidity", "humidity", "%" );
 	sensorPIRtime.setup( SLAVE_WAIT_TIME, "PIR", "motion time", "PIRmotiontime", "%" );
 	slaveUptime.setup( SLAVE_WAIT_TIME, "SLV", "slave uptime", "slaveuptime", "min" );
-
-	LOG_DEBUG( "SLV", "Pulling pin " << REQUEST_DATA_PIN << " low to tell slave that we want data" );
-	pinMode( REQUEST_DATA_PIN, OUTPUT ); digitalWrite( REQUEST_DATA_PIN, LOW ); 
 
 	dataPolled = false;
 }
@@ -50,9 +49,6 @@ void SensorSlave::handle() {
 			if ( i2c.pollData( I2C_SLAVE_ADDRESS, 'T', &temperature, sizeof( temperature ) ) ) sensorDHTtemp.putValue( temperature );
 			
 			dataPolled = true; 
-
-			LOG_DEBUG( "SLV", "Releasing the slave by setting pin " << REQUEST_DATA_PIN << " High" );
-			digitalWrite( REQUEST_DATA_PIN, HIGH );
 		}
 	}
 }

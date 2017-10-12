@@ -21,6 +21,7 @@ class SensorCCS
 		 SensorGeneric sensorCCStvoc;
 
 		 void connect();
+		 void shouldSensorBeReset();
 		 void readSensor();
 
 	public:

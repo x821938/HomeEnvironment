@@ -1,7 +1,7 @@
 #ifndef _LOGGING_h
 #define _LOGGING_h
 
-#define LOGLEVEL 7
+#define LOGLEVEL 5
 #define LOG_TIME_FORMAT 2
 
 #include <Arduino.h>
@@ -52,7 +52,7 @@ template<class T> inline Print &operator <<( Print &obj, T arg ) {
 #if LOGLEVEL >= 0
 	#define LOG_EMERGENCY(svc, content)	do { LOG_FORMAT_TIME; Serial << "  EMERGENCY (" << svc << ") : " << content << endl; } while(0)
 	#if LOGLEVEL >=1 
-		#define LOG_ALERT(svc, content)	do { LOG_FORMAT_TIME; Serial << "  ALART     (" << svc << ") : " << content << endl; } while(0)
+		#define LOG_ALERT(svc, content)	do { LOG_FORMAT_TIME; Serial << "  ALERT     (" << svc << ") : " << content << endl; } while(0)
 		#if LOGLEVEL >= 2
 			#define LOG_CRITICAL(svc, content) do { LOG_FORMAT_TIME; Serial << "  CRITICAL  (" << svc << ") : " << content << endl; } while(0)
 			#if LOGLEVEL >= 3
